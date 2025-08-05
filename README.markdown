@@ -16,7 +16,7 @@ A Node.js REST API for managing stock transactions and settlement accounts, usin
 - Node.js (v16+)
 - MySQL database
 - npm or yarn
-- Yahoo Finance API (`yahoo-finance2`)
+- 12trading api
 
 ## Installation
 1. **Clone Repository**:
