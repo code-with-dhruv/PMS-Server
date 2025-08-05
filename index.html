@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto p-4">
+        <header class="bg-white shadow rounded-lg p-6 mb-6 flex justify-between items-center">
+            <div>
+                <div class="text-sm text-gray-600">User ID:</div>
+                <div class="font-medium">user123</div>
+            </div>
+            <div>
+                <div class="text-sm text-gray-600">Balance:</div>
+                <div id="currentBalance" class="font-medium text-green-600">0.00</div>
+            </div>
+            <button id="refreshPortfolio" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Refresh</button>
+        </header>
+
+        <nav class="bg-white shadow rounded-lg p-4 mb-6">
+            <div class="flex space-x-4">
+                <button class="tab-btn px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-500" data-tab="search">Search Assets</button>
+                <button class="tab-btn px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-500" data-tab="portfolio">Portfolio</button>
+                <button class="tab-btn px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-500" data-tab="transactions">Transactions</button>
+                <button class="tab-btn px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-500" data-tab="settlement">Settlement Account</button>
+            </div>
+        </nav>
+
+        <main>
+            <div id="search" class="tab-content active">
+                <div class="bg-white shadow rounded-lg p-6 mb-6">
+                    <h2 class="text-xl font-semibold mb-4">Search & Trade Assets</h2>
+                    <div class="flex space-x-2 mb-4">
+                        <input id="searchInput" type="text" placeholder="Search for assets..." class="w-full p-2 border rounded-md">
+                        <button id="searchBtn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Search</button>
+                    </div>
+                    <div id="searchResults"></div>
+
+                    <div id="quoteDisplay" class="hidden mt-6">
+                        <h3 class="text-lg font-medium mb-4">Current Quote</h3>
+                        <div id="quoteInfo" class="border border-gray-200 rounded-lg p-4"></div>
+                    </div>
+
+                    <div id="transactionForm" class="hidden mt-6">
+                        <h3 class="text-lg font-medium mb-4">Create Transaction</h3>
+                        <form id="tradeForm" class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div>
+                                    <label for="symbolDisplay" class="block text-sm font-medium text-gray-700">Symbol</label>
+                                    <input id="symbolDisplay" type="text" readonly class="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-100" />
+                                    <input id="selectedSymbol" type="hidden" />
+                                </div>
+                                <div>
+                                    <label for="selectedAssetType" class="block text-sm font-medium text-gray-700">Asset Type</label>
+                                    <select id="selectedAssetType" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                        <option value="stock">Stock</option>
+                                        <option value="bond">Bond</option>
+                                        <option value="mutual_fund">Mutual Fund</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="quantity" class="block text-sm font-medium text-gray-700">Quantity</label>
+                                    <input id="quantity" type="number" min="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                                </div>
+                                <div>
+                                    <label for="transactionType" class="block text-sm font-medium text-gray-700">Type</label>
+                                    <select id="transactionType" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                        <option value="buy">Buy</option>
+                                        <option value="sell">Sell</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                    <span id="tradeText">Execute Trade</span>
+                                    <svg id="tradeLoading" class="hidden animate-spin h-5 w-5 text-white ml-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div id="portfolio" class="tab-content hidden">
+                <div class="bg-white shadow rounded-lg p-6 mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold">Portfolio Holdings</h2>
+                        <button id="refreshPortfolio" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Refresh</button>
+                    </div>
+                    <div id="portfolioHoldings"></div>
+                </div>
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h2 class="text-xl font-semibold mb-4">Asset Diversification</h2>
+                    <div class="flex flex-col md:flex-row gap-6">
+                        <div class="w-full md:w-1/2">
+                            <canvas id="diversificationChart" width="300" height="300"></canvas>
+                        </div>
+                        <div id="diversificationStats" class="w-full md:w-1/2"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="transactions" class="tab-content hidden">
+                <div class="bg-white shadow rounded-lg p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold">Transaction History</h2>
+                        <button id="refreshTransactions" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Refresh</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Symbol</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Asset Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactionsList" class="divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="settlement" class="tab-content hidden">
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h2 class="text-xl font-semibold mb-4">Settlement Account</h2>
+                    <div class="mb-6">
+                        <div id="settlementBalance" class="text-2xl font-bold text-green-600">0.00</div>
+                        <div class="text-sm text-gray-600">Available Balance</div>
+                    </div>
+                    <form id="settlementForm" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="amount" class="block text-sm font-medium text-gray-700">Add/Withdraw Amount</label>
+                                <input id="amount" type="number" step="0.01" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+                            </div>
+                            <div class="flex items-end space-x-2">
+                                <button id="addBalance" type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Add Balance</button>
+                                <button id="withdrawBalance" type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Withdraw Balance</button>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="mt-8">
+                        <h3 class="text-lg font-medium mb-4">Settlement Transaction History</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="settlementTransactionsList" class="divide-y divide-gray-200">
+                                    <tr><td colspan="4" class="text-center py-4">Loading settlement transactions...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <button id="eraseAllData" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Erase All Data</button>
+                        <div class="text-sm text-gray-600 mt-2">This will delete all transactions and reset accounts</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <div id="toast" class="fixed bottom-4 right-4 bg-white shadow-lg rounded-lg p-4 flex items-center space-x-2 hidden">
+            <div id="toastIcon"></div>
+            <div id="toastMessage" class="text-sm"></div>
+        </div>
+    </div>
+    <script src="/client.js"></script>
+</body>
+</html>
