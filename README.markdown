@@ -1,23 +1,24 @@
 # Stock Trading API
 
 ## Overview
-A Node.js-based REST API for managing stock transactions, settlement accounts, and portfolio data, built with Express.js, Prisma (PostgreSQL), and Yahoo Finance for real-time stock quotes.
+A Node.js REST API for managing stock transactions and settlement accounts, using Express.js, MySQL, and Yahoo Finance for stock quotes. The front end uses HTML with Tailwind CSS.
 
 ## Features
-- **Stock Quotes**: Fetch real-time stock quotes using Yahoo Finance.
-- **Transactions**: Create, retrieve, and delete buy/sell transactions for stocks, bonds, mutual funds, and common stocks.
-- **Settlement Accounts**: Manage user account balances with add/withdraw actions.
-- **Portfolio**: View user holdings, diversification, and total portfolio value.
-- **Data Erasure**: Admin-only endpoint to clear all transactions and accounts.
+- Fetch real-time stock quotes.
+- Create, retrieve, and delete buy/sell transactions.
+- Manage user settlement account balances.
+- View portfolio with holdings and diversification.
+- Admin endpoint to erase all data.
+- Responsive UI with HTML and Tailwind CSS.
 
 ## Prerequisites
-- Node.js (v16 or higher)
-- PostgreSQL database
+- Node.js (v16+)
+- MySQL database
 - npm or yarn
-- Yahoo Finance API access (via `yahoo-finance2`)
+- Yahoo Finance API (`yahoo-finance2`)
 
 ## Installation
-1. **Clone the Repository**:
+1. **Clone Repository**:
    ```bash
    git clone <repository-url>
    cd stock-trading-api
@@ -29,89 +30,34 @@ A Node.js-based REST API for managing stock transactions, settlement accounts, a
    ```
 
 3. **Set Up Environment Variables**:
-   Create a `.env` file in the root directory:
+   Create `.env`:
    ```
-   DATABASE_URL="postgresql://user:password@localhost:5432/db_name"
+   DB_HOST=localhost
+   DB_USER=your_user
+   DB_PASSWORD=your_password
+   DB_NAME=your_database
    PORT=3000
    ```
 
-4. **Set Up Prisma**:
-   - Initialize Prisma schema:
-     ```bash
-     npx prisma init
-     ```
-   - Update `prisma/schema.prisma` with the provided schema (see below).
-   - Run migrations:
-     ```bash
-     npx prisma migrate dev --name init
-     ```
+4. **Set Up MySQL**:
+   - Create database in MySQL.
+   - Run `server.js` to initialize tables (`transactions`, `settlement_accounts`, `settlement_transactions`).
 
-5. **Start the Server**:
+5. **Start Server**:
    ```bash
    npm start
    ```
 
-## Prisma Schema
-The database uses PostgreSQL with the following Prisma schema (`prisma/schema.prisma`):
-
-```prisma
-datasource db {
-  provider = "postgres"
-  url      = env("DATABASE_URL")
-}
-
-model Transaction {
-  id         Int       @id @default(autoincrement())
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  userId     String    @map("user_id") @db.VarChar(255)
-  symbol     String    @db.VarChar(50)
-  quantity   Int
-  price      Decimal   @db.Decimal(10, 2)
-  type       TransactionType
-  assetType  AssetType @map("asset_type")
-}
-
-model SettlementAccount {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  userId    String   @unique @map("user_id") @db.VarChar(255)
-  balance   Decimal  @db.Decimal(15, 2) @default(0.00)
-}
-
-model SettlementTransaction {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  userId    String   @map("user_id") @db.VarChar(255)
-  amount    Decimal  @db.Decimal(15, 2)
-  action    ActionType
-}
-
-enum TransactionType {
-  buy
-  sell
-}
-
-enum AssetType {
-  stock
-  bond
-  mutual_fund
-  common_stock
-}
-
-enum ActionType {
-  add
-  withdraw
-}
-```
+## Front End
+- **Location**: `public/index.html`
+- **Styling**: Tailwind CSS (included via CDN or local build).
+- **Features**: Displays stock quotes, transaction forms, and portfolio data with responsive design.
 
 ## API Endpoints
-- **GET /**: Serves the static `index.html` from the `public` folder.
-- **GET /api/search/:query**: Search for assets by query (e.g., `/api/search/AAPL`).
-- **GET /api/quote/:symbol**: Fetch stock quote for a symbol (e.g., `/api/quote/AAPL`).
-- **POST /api/transactions**: Create a transaction (buy/sell).
+- **GET /**: Serves `public/index.html`.
+- **GET /api/search/:query**: Search assets (e.g., `/api/search/AAPL`).
+- **GET /api/quote/:symbol**: Fetch stock quote (e.g., `/api/quote/AAPL`).
+- **POST /api/transactions**: Create transaction.
   ```json
   {
     "user_id": "user1",
@@ -121,20 +67,42 @@ enum ActionType {
     "asset_type": "stock"
   }
   ```
-- **GET /api/portfolio/:userId**: Retrieve user portfolio with holdings and diversification.
+- **GET /api/portfolio/:userId**: Get user portfolio.
 - **GET /api/transactions**: Fetch all transactions.
-- **GET /api/transactions/:userId**: Fetch transactions for a specific user.
-- **DELETE /api/transactions/:id**: Delete a transaction (requires `x-sudo-key: admin123` header).
-- **GET /api/settlement/:userId**: Get user settlement account balance.
-- **POST /api/settlement/:userId**: Add or withdraw funds from a settlement account.
+- **GET /api/transactions/:userId**: Fetch user transactions.
+- **DELETE /api/transactions/:id**: Delete transaction (requires `x-sudo-key: admin123`).
+- **GET /api/settlement/:userId**: Get settlement balance.
+- **POST /api/settlement/:userId**: Add/withdraw funds.
   ```json
   {
     "amount": 1000,
     "action": "add"
   }
   ```
-- **GET /api/settlement_transactions/:userId**: Fetch settlement transaction history.
-- **DELETE /api/erase**: Erase all data (requires `x-sudo-key: admin123` header).
+- **GET /api/settlement_transactions/:userId**: Fetch settlement transactions.
+- **DELETE /api/erase**: Erase all data (requires `x-sudo-key: admin123`).
+
+## Database Schema
+- **transactions**:
+  - `id`: INT, PRIMARY KEY, AUTO_INCREMENT
+  - `user_id`: VARCHAR(255)
+  - `symbol`: VARCHAR(50)
+  - `quantity`: INT
+  - `price`: DECIMAL(10,2)
+  - `type`: ENUM('buy', 'sell')
+  - `asset_type`: ENUM('stock', 'bond', 'mutual_fund', 'common stock')
+  - `timestamp`: DATETIME, DEFAULT CURRENT_TIMESTAMP
+
+- **settlement_accounts**:
+  - `user_id`: VARCHAR(255), PRIMARY KEY
+  - `balance`: DECIMAL(15,2), DEFAULT 0.00
+
+- **settlement_transactions**:
+  - `id`: INT, PRIMARY KEY, AUTO_INCREMENT
+  - `user_id`: VARCHAR(255)
+  - `amount`: DECIMAL(15,2)
+  - `action`: ENUM('add', 'withdraw')
+  - `timestamp`: DATETIME, DEFAULT CURRENT_TIMESTAMP
 
 ## Testing
 1. **Install Test Dependencies**:
@@ -147,19 +115,20 @@ enum ActionType {
    npm test
    ```
 
-3. **Test File**: `server.test.js` includes tests for all endpoints, mocking Prisma and Yahoo Finance dependencies.
+3. **Test File**: `server.test.js` mocks `mysql2/promise` and `yahoo-finance2`.
 
 ## Dependencies
 - `express`: Web framework
-- `@prisma/client`: Database ORM
+- `mysql2`: MySQL driver
 - `yahoo-finance2`: Stock quote API
 - `cors`: Cross-origin resource sharing
-- `body-parser`: Parse JSON request bodies
-- `dotenv`: Environment variable management
-- `jest`, `supertest`: Testing framework and HTTP testing
+- `body-parser`: JSON request parsing
+- `dotenv`: Environment variables
+- `jest`, `supertest`: Testing
+- Tailwind CSS: Front-end styling (via CDN or local)
 
 ## Notes
-- **Database**: Ensure PostgreSQL is running and `DATABASE_URL` is set correctly.
-- **Testing**: Update `server.test.js` to mock `@prisma/client` for tests (example provided in previous responses).
-- **Security**: The `x-sudo-key` (`admin123`) is hardcoded for simplicity; use a secure method in production.
-- **Prisma Migrations**: Run `npx prisma migrate dev` after schema changes.
+- **Database**: Ensure MySQL is running and `.env` variables are set.
+- **Front End**: Customize `public/index.html` with Tailwind CSS for UI.
+- **Security**: Hardcoded `x-sudo-key` (`admin123`) should be secured in production.
+- **Testing**: Mock `mysql2/promise` in `server.test.js` for isolated tests.
