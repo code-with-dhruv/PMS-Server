@@ -2,7 +2,7 @@ Stock Trading API
 Overview
 A Node.js REST API for managing stock transactions and settlement accounts, using Express.js, MySQL, and Yahoo Finance for stock quotes. The front end uses HTML with Tailwind CSS.
 ER Diagram
-![Database ER Diagram](.prisma-erd.svg)
+![Database ER Diagram](prisma-erd.svg)
 Features
 
 Fetch real-time stock quotes.
