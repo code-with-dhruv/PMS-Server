@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:3000/api';
+const API_BASE = 'http://localhost:8000/api';
 const CURRENT_USER_ID = 'user123';
 const SUDO_KEY = 'admin123';
 let currentChart = null;
@@ -236,6 +236,86 @@ async function loadPortfolio() {
         showToast(error.message, 'error');
     }
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+    // Tab switching
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const tab = btn.getAttribute("data-tab");
+            document.querySelectorAll(".tab-content").forEach(tc => tc.classList.add("hidden"));
+            document.getElementById(tab).classList.remove("hidden");
+        });
+    });
+
+    // Example list of stocks to choose from for the timeline chart
+    const stockSelect = document.getElementById("stockSelect");
+    const sampleStocks = ["AAPL", "MSFT", "GOOGL", "AMZN", "IBM",'BND','TSLA','NVDA','META','FXAIX'];
+
+    sampleStocks.forEach(symbol => {
+        const opt = document.createElement("option");
+        opt.value = symbol;
+        opt.textContent = symbol;
+        stockSelect.appendChild(opt);
+    });
+
+    const ctx = document.getElementById("stockTimeChart").getContext("2d");
+    let stockChart = null;
+
+    stockSelect.addEventListener("change", async () => {
+        const symbol = stockSelect.value;
+        if (!symbol) return;
+
+        const res = await fetch(`${API_BASE}/time_series/${symbol}`);
+        const data = await res.json();
+
+        const labels = data.map(entry => entry.datetime);
+        const prices = data.map(entry => entry.close);
+
+        if (stockChart) {
+            stockChart.destroy(); // Destroy previous chart before creating new
+        }
+
+        stockChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label: `${symbol} Close Price`,
+                    data: prices,
+                    fill: false,
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    },
+                    y: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Close Price ($)'
+                        }
+                    }
+                }
+            }
+        });
+    });
+});
+
 
 function updateDiversificationChart(diversification) {
     const ctx = document.getElementById('diversificationChart')?.getContext('2d');
