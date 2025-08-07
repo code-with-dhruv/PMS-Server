@@ -3,7 +3,7 @@ name: PMS
 on:
   pull_request:
     branches:
-    - master
+    - main
 
 jobs:
   synapse:
