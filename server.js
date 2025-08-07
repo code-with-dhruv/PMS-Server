@@ -84,7 +84,13 @@ app.get('/api/search/:query', async (req, res) => {
         if (response.data.status === 'error') {
             return res.status(404).json({ error: response.data.message });
         }
-
+        res.json(response.data.data.map(item => ({
+            symbol: item.symbol,
+            name: item.instrument_name,
+            type: item.instrument_type.toLowerCase(),
+            exchange: item.exchange,
+            currency: item.currency
+        })));
     } catch (error) {
         console.error('Error searching assets:', error.message);
         res.status(500).json({ error: 'Failed to search assets' });
@@ -407,6 +413,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
-
 
 module.exports = app;
