@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:3000/api';
+const API_BASE = 'http://localhost:8000/api';
 const CURRENT_USER_ID = 'user123';
 const SUDO_KEY = 'admin123';
 let currentChart = null;
@@ -53,6 +53,71 @@ document.getElementById('searchBtn').addEventListener('click', searchAssets);
 document.getElementById('searchInput').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') searchAssets();
 });
+
+async function fetchTopMovers() {
+    try {
+        const res = await fetch(`${API_BASE}/top-movers`);
+        const data = await res.json();
+
+        const list = document.getElementById('gainers-list');
+        list.innerHTML = '';
+
+        if (data.length === 0) {
+            list.innerHTML = '<p class="text-gray-500">No top movers found.</p>';
+            return;
+        }
+
+        data.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'p-4 bg-green-50 border border-green-200 rounded-lg shadow';
+
+            card.innerHTML = `
+                <div class="text-green-600 text-lg font-bold">&#9650; ${item.symbol}</div>
+                <div class="text-gray-800 text-sm mt-1">$${item.price.toFixed(2)}</div>
+            `;
+
+            list.appendChild(card);
+        });
+    } catch (err) {
+        console.error('Failed to load top movers:', err);
+        document.getElementById('gainers-list').innerHTML =
+            '<p class="text-red-600">Failed to load top movers</p>';
+    }
+}
+
+// async function fetchTopLosers() {
+//     try {
+//         const res = await fetch(`${API_BASE}/top-losers`);
+//         const data = await res.json();
+
+//         const list = document.getElementById('losers-list');
+//         list.innerHTML = '';
+
+//         if (data.length === 0) {
+//             list.innerHTML = '<p class="text-gray-500">No top losers found.</p>';
+//             return;
+//         }
+
+//         data.forEach(item => {
+//             const card = document.createElement('div');
+//             card.className = 'p-4 bg-red-50 border border-red-200 rounded-lg shadow text-center';
+
+//             card.innerHTML = `
+//                 <div class="text-red-600 text-lg font-bold">&#9660; ${item.symbol}</div>
+//                 <div class="text-gray-800 text-sm mt-1">$${item.price.toFixed(2)}</div>
+//             `;
+
+//             list.appendChild(card);
+//         });
+//     } catch (err) {
+//         console.error('Failed to load top losers:', err);
+//         document.getElementById('losers-list').innerHTML =
+//             '<p class="text-red-600">Failed to load top losers</p>';
+//     }
+// }
+
+
+
 
 async function searchAssets() {
     const query = document.getElementById('searchInput').value.trim();
@@ -181,6 +246,62 @@ document.getElementById('tradeForm').addEventListener('submit', async (e) => {
     }
 });
 
+// document.getElementById('refreshPortfolio').addEventListener('click', loadPortfolio);
+
+// async function loadPortfolio() {
+//     const holdingsDiv = document.getElementById('portfolioHoldings');
+//     holdingsDiv.innerHTML = '<div class="text-center py-4">Loading portfolio...</div>';
+
+//     try {
+//         const response = await fetch(`${API_BASE}/portfolio/${CURRENT_USER_ID}`);
+//         const data = await response.json();
+
+//         if (!response.ok) throw new Error(data.error || 'Failed to load portfolio');
+
+//         if (data.holdings.length === 0) {
+//             holdingsDiv.innerHTML = '<div class="text-center py-8 text-gray-500">No holdings found</div>';
+//             return;
+//         }
+
+//         holdingsDiv.innerHTML = `
+//             <div class="mb-4">
+//                 <div class="text-2xl font-bold text-green-600">Total Value: ${formatCurrency(data.total_value)}</div>
+//             </div>
+//             <div class="overflow-x-auto">
+//                 <table class="min-w-full divide-y divide-gray-200">
+//                     <thead class="bg-gray-50">
+//                         <tr>
+//                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Symbol</th>
+//                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+//                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
+//                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+//                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Value</th>
+//                         </tr>
+//                     </thead>
+//                     <tbody class="divide-y divide-gray-200">
+//                         ${data.holdings.map(holding => `
+//                             <tr>
+//                                 <td class="px-6 py-4 whitespace-nowrap font-medium">${holding.symbol}</td>
+//                                 <td class="px-6 py-4 whitespace-nowrap">
+//                                     <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">${holding.asset_type}</span>
+//                                 </td>
+//                                 <td class="px-6 py-4 whitespace-nowrap">${holding.quantity}</td>
+//                                 <td class="px-6 py-3 whitespace-nowrap">${formatCurrency(holding.price)}</td>
+//                                 <td class="px-6 py-4 whitespace-nowrap font-medium text-green-600">${formatCurrency(holding.value)}</td>
+//                             </tr>
+//                         `).join('')}
+//                     </tbody>
+//                 </table>
+//             </div>
+//         `;
+
+//         updateDiversificationChart(data.diversification);
+//     } catch (error) {
+//         holdingsDiv.innerHTML = `<div class="text-center py-4 text-red-500">Error: ${error.message}</div>`;
+//         showToast(error.message, 'error');
+//     }
+// }
+
 document.getElementById('refreshPortfolio').addEventListener('click', loadPortfolio);
 
 async function loadPortfolio() {
@@ -209,22 +330,35 @@ async function loadPortfolio() {
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Symbol</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Avg Price</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Current Price</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Value</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Profit / Loss</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
-                        ${data.holdings.map(holding => `
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap font-medium">${holding.symbol}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">${holding.asset_type}</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">${holding.quantity}</td>
-                                <td class="px-6 py-3 whitespace-nowrap">${formatCurrency(holding.price)}</td>
-                                <td class="px-6 py-4 whitespace-nowrap font-medium text-green-600">${formatCurrency(holding.value)}</td>
-                            </tr>
-                        `).join('')}
+                        ${data.holdings.map(holding => {
+                            const profit = parseFloat(holding.profit_loss);
+                            const isProfit = profit >= 0;
+                            const arrow = isProfit ? '▲' : '▼';
+                            const profitClass = isProfit ? 'text-green-600' : 'text-red-600';
+
+                            return `
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap font-medium">${holding.symbol}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">${holding.asset_type}</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">${holding.quantity}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">${formatCurrency(holding.avg_price)}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">${formatCurrency(holding.current_price)}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap font-medium text-green-600">${formatCurrency(holding.value)}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap font-medium ${profitClass}">
+                                        ${arrow} ${formatCurrency(Math.abs(profit))}
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
                     </tbody>
                 </table>
             </div>
@@ -236,6 +370,87 @@ async function loadPortfolio() {
         showToast(error.message, 'error');
     }
 }
+
+
+document.addEventListener("DOMContentLoaded", () => {
+    // Tab switching
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const tab = btn.getAttribute("data-tab");
+            document.querySelectorAll(".tab-content").forEach(tc => tc.classList.add("hidden"));
+            document.getElementById(tab).classList.remove("hidden");
+        });
+    });
+
+    // Example list of stocks to choose from for the timeline chart
+    const stockSelect = document.getElementById("stockSelect");
+    const sampleStocks = ["AAPL", "MSFT", "GOOGL", "AMZN", "IBM",'BND','TSLA','NVDA','META','FXAIX','XMTR'];
+
+    sampleStocks.forEach(symbol => {
+        const opt = document.createElement("option");
+        opt.value = symbol;
+        opt.textContent = symbol;
+        stockSelect.appendChild(opt);
+    });
+
+    const ctx = document.getElementById("stockTimeChart").getContext("2d");
+    let stockChart = null;
+
+    stockSelect.addEventListener("change", async () => {
+        const symbol = stockSelect.value;
+        if (!symbol) return;
+
+        const res = await fetch(`${API_BASE}/time_series/${symbol}`);
+        const data = await res.json();
+
+        const labels = data.map(entry => entry.datetime);
+        const prices = data.map(entry => entry.close);
+
+        if (stockChart) {
+            stockChart.destroy(); // Destroy previous chart before creating new
+        }
+
+        stockChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label: `${symbol} Close Price`,
+                    data: prices,
+                    fill: false,
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    },
+                    y: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Close Price ($)'
+                        }
+                    }
+                }
+            }
+        });
+    });
+});
+
 
 function updateDiversificationChart(diversification) {
     const ctx = document.getElementById('diversificationChart')?.getContext('2d');
@@ -298,7 +513,7 @@ async function loadTransactions() {
 
         tbody.innerHTML = transactions.map(tx => `
             <tr>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">${tx.id}</td>
+                
                 <td class="px-6 py-4 whitespace-nowrap font-medium">${tx.symbol}</td>
                 <td class="px-6 py-4 whitespace-nowrap">
                     <span class="px-2 py-1 text-xs rounded-full ${tx.type === 'buy' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${tx.type.toUpperCase()}</span>
@@ -393,7 +608,7 @@ async function loadSettlementTransactions() {
 
         tbody.innerHTML = transactions.map(tx => `
             <tr>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">${tx.id}</td>
+    
                 <td class="px-6 py-4 whitespace-nowrap">
                     <span class="px-2 py-1 text-xs rounded-full ${tx.action === 'add' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${tx.action.toUpperCase()}</span>
                 </td>
@@ -470,4 +685,53 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
     attemptLoadBalance();
+    fetchTopMovers();
+    //fetchTopLosers();
 });
+
+
+// Buy/Sell button event handlers
+document.getElementById("buyBtn").addEventListener("click", () => handleTransaction("buy"));
+document.getElementById("sellBtn").addEventListener("click", () => handleTransaction("sell"));
+
+async function handleTransaction(type) {
+  const symbol = document.getElementById("symbolInput").value.trim();
+  const quantity = parseInt(document.getElementById("quantityInput").value);
+  const user_id = "user123";
+  const asset_type = document.getElementById("assetTypeInput").value || "stock";
+
+
+  if (!symbol || isNaN(quantity) || quantity <= 0) {
+    alert("Please enter valid stock symbol and quantity.");
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/transactions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        user_id, // Replace with actual user_id if needed
+        symbol,
+        quantity,
+        type,
+        asset_type
+      })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      //alert(data.message);
+      alert('Transaction Successful')
+      loadPortfolio(); // Refresh holdings after buy/sell
+    } else {
+      alert(data.message || "Transaction failed.");
+    }
+  } catch (err) {
+    console.error("Error during transaction:", err);
+    alert("An error occurred while processing the transaction.");
+  }
+}
